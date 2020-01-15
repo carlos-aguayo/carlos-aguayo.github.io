@@ -1,0 +1,84 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <style>
+      #paint {
+        border:3px solid red;
+        width: 500px;
+        height: 500px;
+      }
+      #predicted {
+        font-size: 36px;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js"></script>
+    <div id="paint">
+      <canvas id="myCanvas"></canvas>
+    </div>
+    <span id="predicted">Predicted number: <span id="number"></span></span>
+    <script>
+    // From https://www.html5canvastutorials.com/labs/html5-canvas-paint-application/
+    var canvas = document.getElementById('myCanvas');
+    var ctx = canvas.getContext('2d');
+
+    var painting = document.getElementById('paint');
+    var paint_style = getComputedStyle(painting);
+    canvas.width = parseInt(paint_style.getPropertyValue('width'));
+    canvas.height = parseInt(paint_style.getPropertyValue('height'));
+
+    var mouse = {x: 0, y: 0};
+
+    canvas.addEventListener('mousemove', function(e) {
+      mouse.x = e.pageX - this.offsetLeft;
+      mouse.y = e.pageY - this.offsetTop;
+    }, false);
+
+    ctx.lineWidth = 20;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#00CC99';
+
+    canvas.addEventListener('mousedown', function(e) {
+        ctx.beginPath();
+        ctx.moveTo(mouse.x, mouse.y);
+        canvas.addEventListener('mousemove', onPaint, false);
+    }, false);
+
+    canvas.addEventListener('mouseup', function() {
+      canvas.removeEventListener('mousemove', onPaint, false);
+
+      var img = new Image();
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0, 28, 28);
+        data = ctx.getImageData(0,0,28,28).data;
+        var gray = [];
+        for(var i = 0; i < data.length; i += 4) {
+          // https://www.html5canvastutorials.com/advanced/html5-canvas-grayscale-image-colors-tutorial/
+          // https://www.permadi.com/tutorial/jsCanvasGrayscale/index.html
+          var g = 0.34 * data[i] + 0.5 * data[i + 1] + 0.16 * data[i + 2];
+          gray.push(g/255.0);
+        }
+        model.predict([tf.tensor(gray).reshape([1,28*28])]).array().then(function(scores){
+          scores = scores[0];
+          predicted = scores.indexOf(Math.max(...scores));
+          $("#number").html(predicted);
+        });
+
+      };
+      img.src = canvas.toDataURL("image/png");
+    }, false);
+
+    var onPaint = function() {
+      ctx.lineTo(mouse.x, mouse.y);
+      ctx.stroke();
+    };
+
+    tf.loadLayersModel('model/model.json').then(function(model) {
+      window.model = model;
+    });
+    </script>
+  </body>
+</html>
