@@ -81,7 +81,7 @@
       mouse.y = e.pageY - this.offsetTop;
     }, false);
 
-    context.lineWidth = 20;
+    context.lineWidth = isMobile ? 60 : 25;
     context.lineJoin = 'round';
     context.lineCap = 'round';
     context.strokeStyle = '#0000FF';
