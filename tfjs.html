@@ -1,36 +1,78 @@
-<!DOCTYPE HTML>
-<html>
+<!doctype html>
+<html lang="en">
   <head>
     <style>
       body {
         touch-action: none; /*https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action*/
+        font-family: "Roboto";
+      }
+      h1 {
+        margin: 50px;
+        font-size: 70px;
+        text-align: center;
       }
       #paint {
         border:3px solid red;
-        width: 500px;
-        height: 500px;
+        margin: auto;
       }
-      #predicted {
-        font-size: 36px;
+      #predicted { 
+        font-size: 60px;
+        margin-top: 60px;
+        text-align: center;
+      }
+      #number {
+        border: 3px solid black;
+        margin: auto;
+        margin-top: 30px;
+        text-align: center;
+        vertical-align: middle;
+      }
+      #clear {
+        margin: auto;
+        margin-top: 70px;
+        padding: 30px;
+        text-align: center;
       }
     </style>
   </head>
   <body>
+    <script type="text/javascript" src="http://livejs.com/live.js"></script>
     <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js"></script>
+    <h1>Digit Recognition WebApp</h1>
     <div id="paint">
       <canvas id="myCanvas"></canvas>
     </div>
-    <span id="predicted">Predicted number: <span id="number"></span></span>
+    <div id="predicted">
+      Recognized digit
+      <div id="number"></div>
+      <button id="clear">Clear</button>
+    </div>
     <script>
+    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+      $('#paint').css({'width': '60%'});
+      $('#number').css({'width': '30%', 'font-size': '240px'});
+      $('#clear').css({'font-size': '50px'});
+    } else {
+      $('#paint').css({'width': '300px'});
+      $('#number').css({'width': '150px', 'font-size': '120px'});
+      $('#clear').css({'font-size': '35px'});
+    }
+
+    var cw = $('#paint').width();
+    $('#paint').css({'height': cw + 'px'});
+
+    cw = $('#number').width();
+    $('#number').css({'height': cw + 'px'});
+
     // From https://www.html5canvastutorials.com/labs/html5-canvas-paint-application/
     var canvas = document.getElementById('myCanvas');
-    var ctx = canvas.getContext('2d');
+    var context = canvas.getContext('2d');
 
-    var painting = document.getElementById('paint');
-    var paint_style = getComputedStyle(painting);
-    canvas.width = parseInt(paint_style.getPropertyValue('width'));
-    canvas.height = parseInt(paint_style.getPropertyValue('height'));
+    var compuetedStyle = getComputedStyle(document.getElementById('paint'));
+    canvas.width = parseInt(compuetedStyle.getPropertyValue('width'));
+    canvas.height = parseInt(compuetedStyle.getPropertyValue('height'));
 
     var mouse = {x: 0, y: 0};
 
@@ -39,38 +81,36 @@
       mouse.y = e.pageY - this.offsetTop;
     }, false);
 
-    ctx.lineWidth = 20;
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = '#00CC99';
+    context.lineWidth = 20;
+    context.lineJoin = 'round';
+    context.lineCap = 'round';
+    context.strokeStyle = '#0000FF';
 
     canvas.addEventListener('mousedown', function(e) {
-      ctx.moveTo(mouse.x, mouse.y);
-      ctx.beginPath();
+      context.moveTo(mouse.x, mouse.y);
+      context.beginPath();
       canvas.addEventListener('mousemove', onPaint, false);
     }, false);
 
     canvas.addEventListener('mouseup', function() {
+      $('#number').html('<img id="spinner" src="spinner.gif"/>');
       canvas.removeEventListener('mousemove', onPaint, false);
       var img = new Image();
       img.onload = function() {
-        ctx.drawImage(img, 0, 0, 28, 28);
-        data = ctx.getImageData(0, 0, 28, 28).data;
-        var gray = [];
+        context.drawImage(img, 0, 0, 28, 28);
+        data = context.getImageData(0, 0, 28, 28).data;
+        var input = [];
         for(var i = 0; i < data.length; i += 4) {
-          // https://www.html5canvastutorials.com/advanced/html5-canvas-grayscale-image-colors-tutorial/
-          // https://www.permadi.com/tutorial/jsCanvasGrayscale/index.html
-          var g = 0.34 * data[i] + 0.5 * data[i + 1] + 0.16 * data[i + 2];
-          gray.push(g/255.0);
+          input.push(data[i + 2] / 255);
         }
-        predict(gray);
+        predict(input);
       };
-      img.src = canvas.toDataURL("image/png");
+      img.src = canvas.toDataURL('image/png');
     }, false);
 
     var onPaint = function() {
-      ctx.lineTo(mouse.x, mouse.y);
-      ctx.stroke();
+      context.lineTo(mouse.x, mouse.y);
+      context.stroke();
     };
 
     tf.loadLayersModel('model/model.json').then(function(model) {
@@ -79,36 +119,41 @@
 
     // http://bencentra.com/code/2014/12/05/html5-canvas-touch-events.html
     // Set up touch events for mobile, etc
-    canvas.addEventListener("touchstart", function (e) {
+    canvas.addEventListener('touchstart', function (e) {
       var touch = e.touches[0];
-      canvas.dispatchEvent(new MouseEvent("mousedown", {
+      canvas.dispatchEvent(new MouseEvent('mousedown', {
         clientX: touch.clientX,
         clientY: touch.clientY
       }));
     }, false);
-    canvas.addEventListener("touchend", function (e) {
-      canvas.dispatchEvent(new MouseEvent("mouseup", {}));
+    canvas.addEventListener('touchend', function (e) {
+      canvas.dispatchEvent(new MouseEvent('mouseup', {}));
     }, false);
-    canvas.addEventListener("touchmove", function (e) {
+    canvas.addEventListener('touchmove', function (e) {
       var touch = e.touches[0];
-      canvas.dispatchEvent(new MouseEvent("mousemove", {
+      canvas.dispatchEvent(new MouseEvent('mousemove', {
         clientX: touch.clientX,
         clientY: touch.clientY
       }));
     }, false);
 
-    function predict(gray) {
+    var predict = function(input) {
       if (window.model) {
-        window.model.predict([tf.tensor(gray).reshape([1,28*28])]).array().then(function(scores){
+        window.model.predict([tf.tensor(input).reshape([1, 28 * 28])]).array().then(function(scores){
           scores = scores[0];
           predicted = scores.indexOf(Math.max(...scores));
-          $("#number").html(predicted);
+          $('#number').html(predicted);
         });
       } else {
         // The model takes a bit to load, if we are too fast, wait
-        setTimeout(function(){predict(gray)}, 50);
+        setTimeout(function(){predict(input)}, 50);
       }
     }
+
+    $('#clear').click(function(){
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      $('#number').html('');
+    });
     </script>
   </body>
 </html>
