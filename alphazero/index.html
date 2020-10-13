@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-5ZKYMLNNLR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-5ZKYMLNNLR');
+    </script>
+    <title>Play Dots and Boxes against AlphaZero, a WebApp</title>
+    <meta name="description" content="Play Dots and Boxes against AlphaZero, a WebApp">
+    <meta name="keywords" content="Machine Learning, Reinforcement Learning, TensorFlow.js, AlphaZero">
+    <meta name="author" content="Carlos Aguayo">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/switch.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  </head>
+  <body class="bg-light">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <!-- <script src="http://livejs.com/live.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.6.0/dist/tf.min.js"></script>
+    <script type="text/javascript" src="js/DotsAndBoxesLogic.js"></script>
+    <script type="text/javascript" src="js/DotsAndBoxesGame.js"></script>
+    <script type="text/javascript" src="js/MCTS.js"></script>
+    <header>
+      <div class="collapse bg-dark" id="navbarHeader">
+        <div class="container">
+          <div class="row">
+            <div class="col-sm-8 col-md-7 py-4">
+              <h4 class="text-white">About</h4>
+              <p class="text-muted">WebApp that implements AlphaZero, an exciting and novel Reinforcement Learning Algorithm, used to beat world-champions in games like Go and Chess. In this WebApp, AlphaZero was trained to play the <a href="https://en.wikipedia.org/wiki/Dots_and_Boxes">Dots and Boxes game</a>. This WebApp was written for this <a href="#">blog post</a>.</p>
+            </div>
+            <div class="col-sm-4 offset-md-1 py-4">
+              <h4 class="text-white">Contact</h4>
+              <ul class="list-unstyled">
+                <li><a href="#" class="text-white">Medium Blog Post</a></li>
+                <li><a href="https://twitter.com/carlosaguayo81" class="text-white">Follow on Twitter</a></li>
+                <li><a href="https://www.linkedin.com/in/carlosaguayo" class="text-white">Follow on LinkedIn</a></li>
+                <li><a href="mailto:carlos.aguayo@gmail.com" class="text-white">Email me</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="navbar navbar-dark bg-dark box-shadow">
+        <div class="container d-flex justify-content-between">
+          <a href="#" class="navbar-brand d-flex align-items-center">
+            <strong>Play Dots and Boxes against AlphaZero, a WebApp</strong>
+          </a>
+          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarHeader" aria-controls="navbarHeader" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+        </div>
+      </div>
+    </header>
+    <main role="main" class="container">
+      <div class="row">&nbsp;</div>
+      <div class="row">
+        <div class="col-sm-4">
+          <div style="margin:20px 0;">
+            <span class="player_name">Player 1</span>
+            <label class="switch switch-left-right" style="margin:auto;">
+              <input id="player1_type" class="switch-input" type="checkbox" checked />
+              <span class="switch-label" data-on="Human" data-off="AlphaZero"></span> 
+              <span class="switch-handle"></span> 
+            </label>
+          </div>
+          <div>
+            <span class="player_name">Player 2</span>
+            <label class="switch switch-left-right">
+              <input id="player2_type" class="switch-input" type="checkbox" />
+              <span class="switch-label" data-on="Human" data-off="AlphaZero"></span> 
+              <span class="switch-handle"></span> 
+            </label>
+          </div>
+          <div class="row">&nbsp;</div>
+          <div>
+            <div class="form-group">
+              <div class="score player1">0</div>
+              <div class="score player2">0</div>
+            </div>
+          </div>
+          <button id="start_game" type="button" class="btn btn-success start_game">
+            Start Game
+          </button>
+        </div>
+        <div class="col-md-8">
+          <svg style="visibility: hidden;" height="500px" width="100%" transform="translate(0,0)">
+            <g class="game-row" transform="translate(0,0)">
+              <g class="game-cell" transform="translate(0,0)">
+                <rect class="square" x="30px" 
+                                     y="30px" 
+                                     width="100px" 
+                                     height="100px" fill="transparent" rx="20px"></rect>
+                <circle cx="10" cy="10" r="5" stroke="black" stroke-width="6" fill="black" />
+                <line class="horizontal" x1="35" 
+                                         x2="125" 
+                                         y1="10" 
+                                         y2="10" stroke="#f2d194" stroke-width="20" stroke-linecap="round"/>
+                <line class="vertical" x1="10" 
+                                       x2="10" 
+                                       y1="35" 
+                                       y2="125" stroke="#f2d194" stroke-width="20" stroke-linecap="round"/>
+               </g>
+            </g>
+          </svg>
+        </div>
+      </div>
+      <div class="footer">
+        <a href="https://twitter.com/carlosaguayo81?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-show-count="false">Follow @carlosaguayo81</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+      </div>
+      </div>
+    </main>
+
+    <script>
+      let p1_human, p2_human;
+
+      const n = 3;
+      const numMCTSSims = 50;
+
+      const player1_color = "blue";
+      const player2_color = "red";
+      const player1_color_light = "#327bf0";
+      const player2_color_light = "#fa9191";
+
+      let game = new DotsAndBoxesGame(n);
+      let board = game.getInitBoard();
+      let mtcs;
+      let action;
+      let curPlayer = 1;
+
+      const SKIP_ACTION = game.getActionSize() - 1;
+      let actions = [];
+
+      // Load the Neural Network
+      tf.loadLayersModel(`model-n${n}/model.json`).then(function(neural_network) {
+        // Instantiate a Monte Carlo Tree Search with the Neural Network
+        mtcs = new MCTS(game, neural_network, {cpuct: 1.0, numMCTSSims: numMCTSSims});
+      });
+
+      function draw_board() {
+        let cell_template = $(".game-cell");
+
+        let x = 0;
+        let cell;
+        for (let i = 0; i < n; i++) {
+          x += 140;
+          cell = cell_template.clone();
+          cell.attr("transform", `translate(${x},0)`);
+          $(".game-row").append(cell);
+        }
+        cell.find("rect.square").remove();
+        cell.find("line.horizontal").remove();
+        
+        let row = $(".game-row");
+        let svg = row.parent();
+
+        x = 0;
+        let y = 0;
+        for (let i = 0; i < n; i++) {
+          y += 140;
+          row = row.clone();
+          row.attr("transform", `translate(${x},${y})`);
+          svg.append(row);
+        }
+        row.find("rect.square").remove();
+        row.find("line.vertical").remove();
+
+        $("line.horizontal").each(function(index){
+          $(this).attr("data-index", index);
+        });
+        $("line.vertical").each(function(index){
+          $(this).attr("data-index", index + n*(n+1));
+        });
+      }
+
+      function is_skip(board, curPlayer) {
+        let skip = parseInt(board[2][board[2].length-1]) == 1;
+        let gameEnded = game.getGameEnded(board, curPlayer);
+        return skip && !gameEnded;
+      }
+
+      function color_square(color, action, up, down, left, right) {
+        if (up) {
+          let index = action - n;
+          $(`rect.square:eq(${index})`).attr("fill", color);
+        }
+        if (down) {
+          let index = action;
+          $(`rect.square:eq(${index})`).attr("fill", color);
+        }
+        if (left) {
+          let a = action - n * (n+1) - 1;
+          let index = (a % (n+1)) + parseInt(a/(n+1)) * n;
+          $(`rect.square:eq(${index})`).attr("fill", color);
+        }
+        if (right) {
+          let a = action - n * (n+1);
+          let index = (a % (n+1)) + parseInt(a/(n+1)) * n;
+          $(`rect.square:eq(${index})`).attr("fill", color);
+        }
+        let number = (curPlayer == -1 ? "1" : "2");
+        $(`.score.player${number}`).text(board[curPlayer == -1 ? 0 : 1][board[0].length-1]);
+      }
+
+      function update_players_turn(board, curPlayer) {
+        $("div.score.player1").css("background-color", player1_color_light);
+        $("div.score.player2").css("background-color", player2_color_light);
+        if (actions.length > 0) {
+          if (game.getGameEnded(board, curPlayer)) {
+            try { // Log outcome
+              fetch('https://djn5ppn980.execute-api.us-east-1.amazonaws.com/prod', {
+                method: 'post', mode: 'cors', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({"p1_human":`${p1_human}`,"p2_human":`${p2_human}`, "actions": `${actions}`, "board": `${board}`})
+              });
+            } catch (e) { }
+          } else {
+            let color = curPlayer == 1 ? player1_color : player2_color;
+            let player = curPlayer == 1 ? "div.score.player1" : "div.score.player2";
+            $(player).css("background-color", color);
+          }
+        }
+      }
+
+      function paint_line(curPlayer, action) {
+        // Paint in light color any previously played line
+        $(`line[data-player='${player1_color}']`).css("stroke", player1_color_light);
+        $(`line[data-player='${player2_color}']`).css("stroke", player2_color_light);
+        // Paint in darker color the line just played
+        let color = curPlayer == 1 ? player1_color : player2_color;
+        $(`line[data-index="${action}"]`).css("stroke", color).attr("data-player", color);
+      }
+
+      function is_player_human(curPlayer) {
+        return ((curPlayer == 1 && p1_human) || ((curPlayer == -1 && p2_human)));
+      }
+
+      function yield_to_alphazero() {
+        if (!is_player_human(curPlayer)) {
+          if (mtcs == undefined) {
+            // The NN model has not finished loading and mtcs is undefined
+            // Wait a bit longer
+            setTimeout(yield_to_alphazero, 25);
+          } else {
+            setTimeout(alphazero_play, 25);
+          }
+        }
+      }
+
+      function alphazero_play() {
+        // This is where the magic happens
+        // First we get the board in its canonical form
+        // That means, the view seen as if we were player 1
+        let canonicalBoard = game.getCanonicalForm(board, curPlayer);
+        // Have the Monte Carlo Tree Search return back to us an array with the probability distribution
+        let probs = mtcs.getActionProb(canonicalBoard);
+        // Given that we are in competitive mode, not in training, the probability distribution 
+        // will have just one move set to 1, that's our next move
+        action = probs.indexOf(1);
+        play(action);
+      }
+
+      function human_play() {
+        if (is_player_human(curPlayer)) {
+          action = parseInt(this.getAttribute('data-index'));
+          play(action);
+        }
+      }
+
+      function play(action) {
+        if (is_valid(action)) {
+          actions.push(action);
+          paint_line(curPlayer, action);
+          [board, curPlayer, up, down, left, right] = game.getNextState(board, curPlayer, action);
+          color_square(curPlayer == 1 ? player2_color_light : player1_color_light, action, up, down, left, right);
+          if (is_skip(board, curPlayer)) {
+            actions.push(SKIP_ACTION);
+            [board, curPlayer] = game.getNextState(board, curPlayer, SKIP_ACTION);
+          }
+          yield_to_alphazero();
+          update_players_turn(board, curPlayer);
+        }
+      }
+
+      function is_valid(action) {
+        // An action is valid if that line has not been played
+        return $(`line[data-index="${action}"]`).attr("data-player") == undefined;
+      }
+
+      function start_or_reload_game() {
+        if ($("svg").css('visibility') === 'visible') {
+          // To restart the game, simply reload the page
+          location.reload();
+        } else {
+          p1_human = $("#player1_type").prop("checked");
+          p2_human = $("#player2_type").prop("checked");
+          $("svg").css('visibility', 'visible');
+          $("#start_game").text("Restart game").removeClass("btn-success").addClass("btn-info");
+          yield_to_alphazero();
+          update_players_turn(board, curPlayer);
+        }
+      }
+
+      draw_board();
+      update_players_turn(board, curPlayer);
+      $("#start_game").click(start_or_reload_game);
+      $("line").click(human_play);
+    </script>
+  </body>
+</html>

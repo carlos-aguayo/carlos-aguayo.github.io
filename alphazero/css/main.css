@@ -1,0 +1,30 @@
+body {
+  font-family: 'Lucida Sans Unicode', 'Lucida Grande', sans-serif;
+  font-size: large !important;
+}
+
+.score {
+  border: 2px solid black;
+  width: 180px;
+  height: 35px;
+  text-align: center;
+  line-height: 20px;
+  margin: 15px 20px;
+  padding: 5px 20px;
+  color: white;
+  border-radius: 5px;
+}
+
+button.start_game {
+  margin:10px;
+  line-he ight: 30px;
+  width: 200px;
+}
+
+line {
+  cursor: pointer;
+}
+
+.player_name {
+  line-height: 30px;
+}
