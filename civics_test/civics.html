@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Civics Test Helper</title>
+    <meta name="author" content="Carlos Aguayo">
+    <style>
+    </style>
+  </head>
+  <body>
+    <!-- <script type="text/javascript" src="http://livejs.com/live.js"></script> -->
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <div id="container">
+      <img/>
+    </div>
+    
+
+    <script>
+      var i = 0;
+      while (i <= 0 || i % 2 != 0) {
+        i = Math.floor(Math.random() * 200) + 4;
+      }
+      console.log(i);
+      $("#container img").attr("src", `pages/p${i}.jpg`);
+      $("#container img").click(function(){
+        $("#container img").attr("src", `pages/p${i+1}.jpg`);
+      });
+    </script>
+
+    <script>
+    </script>
+  </body>
+</html>
