@@ -15,7 +15,7 @@
     </style>
   </head>
   <body>
-    <script type="text/javascript" src="http://livejs.com/live.js"></script>
+    <!-- <script type="text/javascript" src="http://livejs.com/live.js"></script> -->
     <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
     <div id="container">
       <img/>
@@ -24,20 +24,18 @@
     <button id="new">new</button>
     <button id="answer">answer</button>
     
-
     <script>
+      var i = 0;
       function generate_new() {
-        var i = 0;
         while (i <= 0 || i % 2 != 0) {
           i = Math.floor(Math.random() * 200) + 4;
         }
-        console.log(i);
         $("#container img").attr("src", `pages/p${i}.jpg`);
-        $("#answer").click(function(){
-          $("#container img").attr("src", `pages/p${i+1}.jpg`);
-        });
       }
       generate_new();
+      $("#answer").click(function(){
+        $("#container img").attr("src", `pages/p${i+1}.jpg`);
+      });
       $("#new").click(function(){
         generate_new();
       });
